@@ -11,9 +11,18 @@ jobs:
 
       - name: Setup Emscripten
         uses: mymindstorm/setup-emsdk@v14
+      
+      - name: Setup RSync
+        uses: GuillaumeFalourd/setup-rsync@v1.2
 
       - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Build Web
         run: ./build_web.sh
+
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@v4
+        with: 
+          folder: build/web
+          ssh-key: ${{ secrets.DEPLOY_KEY }}
