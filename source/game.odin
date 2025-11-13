@@ -27,7 +27,7 @@ created.
 
 package game
 
-import "core:fmt"
+//import "core:fmt"
 import "core:math/linalg"
 import rl "vendor:raylib"
 
@@ -81,26 +81,7 @@ update :: proc() {
 draw :: proc() {
 	rl.BeginDrawing()
 	rl.ClearBackground(rl.BLACK)
-
-	rl.BeginMode2D(game_camera())
-	rl.DrawTextureEx(g.player_texture, g.player_pos, 0, 1, rl.WHITE)
-	rl.DrawRectangleV({20, 20}, {10, 10}, rl.RED)
-	rl.DrawRectangleV({-30, -20}, {10, 10}, rl.GREEN)
-	rl.EndMode2D()
-
-	// NOTE: `fmt.ctprintf` uses the temp allocator. The temp allocator is
-	// cleared at the end of the frame by the main application, meaning inside
-	// `main_hot_reload.odin`, `main_release.odin` or `main_web_entry.odin`.
-	rl.DrawText(
-		fmt.ctprintf("some_number: %v\nplayer_pos: %v", g.some_number, g.player_pos),
-		5,
-		5,
-		8,
-		rl.WHITE,
-	)
-
-	rl.EndMode2D()
-
+	rl.DrawText("Game", 1280 / 2, 720 / 2, 20, rl.WHITE)
 	rl.EndDrawing()
 }
 
@@ -120,9 +101,7 @@ game_init_window :: proc() {
 	rl.SetWindowPosition(200, 200)
 	rl.SetTargetFPS(500)
 	rl.InitAudioDevice()
-	rl.SetExitKey(nil)
-	sound := rl.LoadSound("assets/own.mp3")
-	rl.PlaySound(sound)
+	rl.SetExitKey(.ESCAPE)
 }
 
 @(export)

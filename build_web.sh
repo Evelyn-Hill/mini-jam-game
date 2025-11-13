@@ -3,13 +3,13 @@ set -eu
 
 # Point this to where you installed emscripten. Optional on systems that already
 # have `emcc` in the path.
-EMSCRIPTEN_SDK_DIR="$HOME/repos/emsdk"
+#EMSCRIPTEN_SDK_DIR="$HOME/repos/emsdk"
 OUT_DIR="build/web"
 
 mkdir -p $OUT_DIR
 
-export EMSDK_QUIET=1
-[[ -f "$EMSCRIPTEN_SDK_DIR/emsdk_env.sh" ]] && . "$EMSCRIPTEN_SDK_DIR/emsdk_env.sh"
+#export EMSDK_QUIET=1
+#[[ -f "$EMSCRIPTEN_SDK_DIR/emsdk_env.sh" ]] && . "$EMSCRIPTEN_SDK_DIR/emsdk_env.sh"
 
 # Note RAYLIB_WASM_LIB=env.o -- env.o is an internal WASM object file. You can
 # see how RAYLIB_WASM_LIB is used inside <odin>/vendor/raylib/raylib.odin.
