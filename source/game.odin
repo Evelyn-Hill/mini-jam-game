@@ -38,7 +38,7 @@ Game_Memory :: struct {
 	player_texture: rl.Texture,
 	some_number:    int,
 	run:            bool,
-	//	entities:       Entity_Map,
+	entities:       Entity_Map,
 }
 
 g: ^Game_Memory

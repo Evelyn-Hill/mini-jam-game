@@ -1,6 +1,7 @@
 package game
-/*
-MAX_ENTITIES :: 2048
+
+
+MAX_ENTITIES :: 1386
 
 Entity_Handle :: struct {
 	idx: uint,
@@ -10,11 +11,12 @@ Entity_Handle :: struct {
 Entity :: struct {
 	handle:   Entity_Handle,
 	position: [2]f32,
+	rotation: f32,
 }
 
 Entity_Map :: struct {
 	items:      [MAX_ENTITIES]Entity,
-	free_list:  [MAX_ENTITIES]Entity_Handle,
+	free_list:  [dynamic]Entity_Handle,
 	free_count: uint,
 	count:      uint,
 	top:        uint,
@@ -62,4 +64,3 @@ entity_remove :: proc(h: Entity_Handle) {
 	g.entities.free_list[g.entities.free_count] = h
 	g.entities.free_count += 1
 }
-*/
