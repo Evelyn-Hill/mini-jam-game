@@ -36,3 +36,9 @@ emcc -o $OUT_DIR/index.html $files $flags
 rm $OUT_DIR/game.wasm.o
 
 echo "Web build created in ${OUT_DIR}"
+
+if [[ $1 == "run" ]]; then
+    echo "starting python http server on port 8000..."
+    pushd ${OUT_DIR} && python -m http.server
+    popd
+fi
