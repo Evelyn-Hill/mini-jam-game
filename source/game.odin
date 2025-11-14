@@ -36,17 +36,21 @@ PIXEL_WINDOW_HEIGHT :: 180
 
 git_file :: #load("../.git/logs/HEAD")
 
+playing: bool = false
+
 Game_Memory :: struct {
 	player_pos:     rl.Vector2,
 	player_texture: rl.Texture,
 	some_number:    int,
 	run:            bool,
 	entities:       Entity_Map,
+	conductor:      ^Conductor,
 }
 
 g: ^Game_Memory
 
 commit_hash: string
+
 
 game_camera :: proc() -> rl.Camera2D {
 	w := f32(rl.GetScreenWidth())
@@ -83,17 +87,57 @@ update :: proc() {
 	if rl.IsKeyPressed(.ESCAPE) {
 		g.run = false
 	}
+
+	if playing {
+		rl.UpdateMusicStream(g.conductor.music)
+		SyncBeat(g.conductor)
+	}
 }
 
 draw :: proc() {
 	hash_string := fmt.caprint("Built From: ", commit_hash)
 	defer delete(hash_string)
 
+
+	DrawRemainingTimeString()
 	rl.BeginDrawing()
 	rl.ClearBackground(rl.BLACK)
-	DrawAnchoredText(.CENTER, {10, 10}, "Hi Owl :)", 20, rl.WHITE)
 	DrawAnchoredText(.TOP_LEFT, {10, 10}, hash_string, 15, rl.WHITE)
+
+	pos := GetAnchoredPosition(.CENTER, {75, 20}, {0, 0})
+	button_rect := rl.Rectangle{f32(pos.x), f32(pos.y), 75, 20}
+	if rl.GuiButton(button_rect, "Toggle Music") {
+		toggle_music()
+	}
+
+	beat := fmt.caprint(g.conductor.quarterNote)
+	defer delete(beat)
+	DrawAnchoredText(.CENTER, -20, beat, 20, rl.WHITE)
+
+
+	half := fmt.caprint(g.conductor.halfNote)
+	defer delete(half)
+	DrawAnchoredText(.CENTER, -50, half, 20, rl.WHITE)
+
+	whole := fmt.caprint(g.conductor.wholeNote)
+	defer delete(whole)
+	DrawAnchoredText(.CENTER, -75, whole, 20, rl.WHITE)
+
+	quarter := fmt.caprint(g.conductor.eighthNote)
+	defer delete(quarter)
+	DrawAnchoredText(.CENTER, -100, quarter, 20, rl.WHITE)
+
 	rl.EndDrawing()
+}
+
+toggle_music :: proc() {
+	if (playing) {
+		rl.StopMusicStream(g.conductor.music)
+		playing = false
+	} else {
+		rl.PlayMusicStream(g.conductor.music)
+		playing = true
+	}
 }
 
 @(export)
@@ -110,7 +154,7 @@ game_init_window :: proc() {
 	rl.SetConfigFlags({.WINDOW_RESIZABLE, .VSYNC_HINT})
 	rl.InitWindow(1280, 720, "Odin + Raylib + Hot Reload template!")
 	rl.SetWindowPosition(200, 200)
-	rl.SetTargetFPS(500)
+	rl.SetTargetFPS(60)
 	rl.InitAudioDevice()
 	rl.SetExitKey(.ESCAPE)
 }
@@ -122,14 +166,17 @@ game_init :: proc() {
 	g^ = Game_Memory {
 		run            = true,
 		some_number    = 100,
-
 		// You can put textures, sounds and music in the `assets` folder. Those
 		// files will be part any release or web build.
 		player_texture = rl.LoadTexture("assets/round_cat.png"),
+		conductor      = new(Conductor),
 	}
+
+	g.conductor.bpm = 108
 
 	commit_hash = GitCommitHash(string(git_file))
 
+	g.conductor.music = rl.LoadMusicStream("./assets/save_it_redd.wav")
 	game_hot_reloaded(g)
 }
 
