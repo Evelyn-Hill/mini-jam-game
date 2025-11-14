@@ -157,22 +157,8 @@ game_init_window :: proc() {
 game_init :: proc() {
 	g = new(Game_Memory)
 
-	g^ = Game_Memory {
-		run       = true,
-		conductor = new(Conductor),
-	}
-
-	g.pattern.rhythm = {Rhythm_Unit{count = 4, duration = .QUARTER}}
-
-	g.conductor.bpm = 108
-	g.conductor.onQuarter = onQuarter
-	g.conductor.onEighth = onEighth
-	g.conductor.onHalf = onHalf
-	g.conductor.onWhole = onWhole
-
 	commit_hash = GitCommitHash(string(git_file))
 
-	g.conductor.music = rl.LoadMusicStream("./assets/save_it_redd.wav")
 	game_hot_reloaded(g)
 }
 
@@ -214,8 +200,27 @@ game_memory_size :: proc() -> int {
 game_hot_reloaded :: proc(mem: rawptr) {
 	g = (^Game_Memory)(mem)
 
-	// Here you can also set your own global variables. A good idea is to make
-	// your global variables into pointers that point to something inside `g`.
+	g^ = Game_Memory {
+		run       = true,
+		conductor = new(Conductor),
+	}
+
+	g.conductor.bpm = 108
+	g.conductor.onQuarter = onQuarter
+	g.conductor.onEighth = onEighth
+	g.conductor.onHalf = onHalf
+	g.conductor.onWhole = onWhole
+
+	g.conductor.music = rl.LoadMusicStream("./assets/save_it_redd.wav")
+
+	g.pattern.rhythm = {
+        Rhythm_Unit{count = 3, duration = .EIGHTH},
+        Rhythm_Unit{count = 3, duration = .EIGHTH},
+        Rhythm_Unit{count = 1, duration = .QUARTER},
+        Rhythm_Unit{count = 1, duration = .EIGHTH},
+        Rhythm_Unit{count = 1, duration = .QUARTER},
+    }
+
 }
 
 @(export)
