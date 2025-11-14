@@ -29,7 +29,6 @@ package game
 
 //import "core:fmt"
 import fmt "core:fmt"
-import "core:math/linalg"
 import rl "vendor:raylib"
 
 PIXEL_WINDOW_HEIGHT :: 180
@@ -41,12 +40,9 @@ playing: bool = false
 click: rl.Sound
 
 Game_Memory :: struct {
-	player_pos:     rl.Vector2,
-	player_texture: rl.Texture,
-	some_number:    int,
-	run:            bool,
-	entities:       Entity_Map,
-	conductor:      ^Conductor,
+	run:       bool,
+	entities:  Entity_Map,
+	conductor: ^Conductor,
 }
 
 g: ^Game_Memory
@@ -82,7 +78,7 @@ game_camera :: proc() -> rl.Camera2D {
 	w := f32(rl.GetScreenWidth())
 	h := f32(rl.GetScreenHeight())
 
-	return {zoom = h / PIXEL_WINDOW_HEIGHT, target = g.player_pos, offset = {w / 2, h / 2}}
+	return {zoom = h / PIXEL_WINDOW_HEIGHT, target = [2]f32{}, offset = {w / 2, h / 2}}
 }
 
 ui_camera :: proc() -> rl.Camera2D {
@@ -90,26 +86,6 @@ ui_camera :: proc() -> rl.Camera2D {
 }
 
 update :: proc() {
-	input: rl.Vector2
-
-	if rl.IsKeyDown(.UP) || rl.IsKeyDown(.W) {
-		input.y -= 1
-	}
-	if rl.IsKeyDown(.DOWN) || rl.IsKeyDown(.S) {
-		input.y += 1
-	}
-	if rl.IsKeyDown(.LEFT) || rl.IsKeyDown(.A) {
-		input.x -= 1
-	}
-
-	if rl.IsKeyDown(.RIGHT) || rl.IsKeyDown(.D) {
-		input.x += 1
-	}
-
-	input = linalg.normalize0(input)
-	g.player_pos += input * rl.GetFrameTime() * 100
-	g.some_number += 1
-
 	if rl.IsKeyPressed(.ESCAPE) {
 		g.run = false
 	}
@@ -181,10 +157,6 @@ game_init :: proc() {
 
 	g^ = Game_Memory {
 		run            = true,
-		some_number    = 100,
-		// You can put textures, sounds and music in the `assets` folder. Those
-		// files will be part any release or web build.
-		player_texture = rl.LoadTexture("assets/round_cat.png"),
 		conductor      = new(Conductor),
 	}
 
