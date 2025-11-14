@@ -194,6 +194,7 @@ game_should_run :: proc() -> bool {
 
 @(export)
 game_shutdown :: proc() {
+	free(g.conductor)
 	free(g)
 }
 
