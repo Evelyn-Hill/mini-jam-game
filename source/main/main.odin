@@ -27,9 +27,6 @@ GAME_LIB_PATH :: LIB_DIR + "game" + LIB_SUFFIX
 
 USE_TRACKING_ALLOCATOR :: #config(USE_TRACKING_ALLOCATOR, false)
 
-
-git_file :: #load("../../.git/logs/HEAD")
-
 Game_API :: struct {
 	lib:               dynlib.Library,
 	init_window:       proc(),
@@ -43,7 +40,6 @@ Game_API :: struct {
 	hot_reloaded:      proc(mem: rawptr),
 	force_reload:      proc() -> bool,
 	force_restart:     proc() -> bool,
-	commit_hash:       proc(hash: string),
 	modification_time: os.File_Time,
 	api_version:       int,
 }
@@ -148,7 +144,6 @@ debug_init :: proc() {
 	game_api_version += 1
 	game_api.init_window()
 	game_api.init()
-	game_api.commit_hash(game.GitCommitHash(string(git_file)))
 
 	old_game_apis := make([dynamic]Game_API, default_allocator)
 
