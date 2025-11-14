@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -eu
 
+do_run=${1:-}
+
 # Point this to where you installed emscripten. Optional on systems that already
 # have `emcc` in the path.
 #EMSCRIPTEN_SDK_DIR="$HOME/repos/emsdk"
@@ -37,7 +39,7 @@ rm $OUT_DIR/game.wasm.o
 
 echo "Web build created in ${OUT_DIR}"
 
-if [[ $1 == "run" ]]; then
+if [[ $do_run == "run" ]]; then
     echo "starting python http server on port 8000..."
     pushd ${OUT_DIR} && python -m http.server
     popd
