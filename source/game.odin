@@ -28,6 +28,7 @@ created.
 package game
 
 //import "core:fmt"
+import fmt "core:fmt"
 import "core:math/linalg"
 import rl "vendor:raylib"
 
@@ -39,6 +40,7 @@ Game_Memory :: struct {
 	some_number:    int,
 	run:            bool,
 	entities:       Entity_Map,
+	commit_hash:    string,
 }
 
 g: ^Game_Memory
@@ -66,6 +68,7 @@ update :: proc() {
 	if rl.IsKeyDown(.LEFT) || rl.IsKeyDown(.A) {
 		input.x -= 1
 	}
+
 	if rl.IsKeyDown(.RIGHT) || rl.IsKeyDown(.D) {
 		input.x += 1
 	}
@@ -80,9 +83,13 @@ update :: proc() {
 }
 
 draw :: proc() {
+	hash_string := fmt.caprint("Built From: ", g.commit_hash)
+	defer delete(hash_string)
+
 	rl.BeginDrawing()
 	rl.ClearBackground(rl.BLACK)
 	DrawAnchoredText(.CENTER, {10, 10}, "Hi Owl :)", 20, rl.WHITE)
+	DrawAnchoredText(.TOP_LEFT, {10, 10}, hash_string, 15, rl.WHITE)
 	rl.EndDrawing()
 }
 
@@ -176,4 +183,9 @@ game_force_restart :: proc() -> bool {
 // `rl.SetWindowSize` call if you don't want a resizable game.
 game_parent_window_size_changed :: proc(w, h: int) {
 	rl.SetWindowSize(i32(w), i32(h))
+}
+
+@(export)
+game_commit_hash :: proc(hash: string) {
+	g.commit_hash = hash
 }
