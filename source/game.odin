@@ -34,16 +34,19 @@ import rl "vendor:raylib"
 
 PIXEL_WINDOW_HEIGHT :: 180
 
+git_file :: #load("../.git/logs/HEAD")
+
 Game_Memory :: struct {
 	player_pos:     rl.Vector2,
 	player_texture: rl.Texture,
 	some_number:    int,
 	run:            bool,
 	entities:       Entity_Map,
-	commit_hash:    string,
 }
 
 g: ^Game_Memory
+
+commit_hash: string
 
 game_camera :: proc() -> rl.Camera2D {
 	w := f32(rl.GetScreenWidth())
@@ -83,7 +86,7 @@ update :: proc() {
 }
 
 draw :: proc() {
-	hash_string := fmt.caprint("Built From: ", g.commit_hash)
+	hash_string := fmt.caprint("Built From: ", commit_hash)
 	defer delete(hash_string)
 
 	rl.BeginDrawing()
@@ -124,6 +127,8 @@ game_init :: proc() {
 		// files will be part any release or web build.
 		player_texture = rl.LoadTexture("assets/round_cat.png"),
 	}
+
+	commit_hash = GitCommitHash(string(git_file))
 
 	game_hot_reloaded(g)
 }
@@ -183,9 +188,4 @@ game_force_restart :: proc() -> bool {
 // `rl.SetWindowSize` call if you don't want a resizable game.
 game_parent_window_size_changed :: proc(w, h: int) {
 	rl.SetWindowSize(i32(w), i32(h))
-}
-
-@(export)
-game_commit_hash :: proc(hash: string) {
-	g.commit_hash = hash
 }
