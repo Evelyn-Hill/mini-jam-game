@@ -20,7 +20,6 @@ DrawAnchoredText :: proc(
 	fontSize: i32,
 	color: rl.Color,
 ) {
-
 	textSize := rl.MeasureTextEx(rl.GetFontDefault(), text, f32(fontSize), 2)
 	textSizeI: UIPosition = {i32(textSize.x), i32(textSize.y)}
 

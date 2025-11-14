@@ -82,7 +82,7 @@ update :: proc() {
 draw :: proc() {
 	rl.BeginDrawing()
 	rl.ClearBackground(rl.BLACK)
-	DrawAnchoredText(.TOP_LEFT, {10, 10}, "This is a super \n long string", 20, rl.WHITE)
+	DrawAnchoredText(.CENTER, {10, 10}, "Hi Owl :)", 20, rl.WHITE)
 	rl.EndDrawing()
 }
 
