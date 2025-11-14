@@ -38,6 +38,8 @@ git_file :: #load("../.git/logs/HEAD")
 
 playing: bool = false
 
+click: rl.Sound
+
 Game_Memory :: struct {
 	player_pos:     rl.Vector2,
 	player_texture: rl.Texture,
@@ -50,6 +52,30 @@ Game_Memory :: struct {
 g: ^Game_Memory
 
 commit_hash: string
+
+
+quarter_rect := rl.Rectangle{10, 20, 20, 20}
+half_rect := rl.Rectangle{10, 50, 20, 20}
+whole_rect := rl.Rectangle{10, 80, 20, 20}
+eighth_rect := rl.Rectangle{10, 110, 20, 20}
+
+
+onQuarter :: proc() {
+	quarter_rect.x += 5
+}
+
+onHalf :: proc() {
+	half_rect.x += 5
+
+}
+
+onWhole :: proc() {
+	whole_rect.x += 5
+}
+
+onEighth :: proc() {
+	eighth_rect.x += 5
+}
 
 
 game_camera :: proc() -> rl.Camera2D {
@@ -110,22 +136,11 @@ draw :: proc() {
 		toggle_music()
 	}
 
-	beat := fmt.caprint(g.conductor.quarterNote)
-	defer delete(beat)
-	DrawAnchoredText(.CENTER, -20, beat, 20, rl.WHITE)
 
-
-	half := fmt.caprint(g.conductor.halfNote)
-	defer delete(half)
-	DrawAnchoredText(.CENTER, -50, half, 20, rl.WHITE)
-
-	whole := fmt.caprint(g.conductor.wholeNote)
-	defer delete(whole)
-	DrawAnchoredText(.CENTER, -75, whole, 20, rl.WHITE)
-
-	quarter := fmt.caprint(g.conductor.eighthNote)
-	defer delete(quarter)
-	DrawAnchoredText(.CENTER, -100, quarter, 20, rl.WHITE)
+	rl.DrawRectangleRec(eighth_rect, rl.RED)
+	rl.DrawRectangleRec(quarter_rect, rl.RED)
+	rl.DrawRectangleRec(half_rect, rl.RED)
+	rl.DrawRectangleRec(whole_rect, rl.RED)
 
 	rl.EndDrawing()
 }
@@ -157,6 +172,7 @@ game_init_window :: proc() {
 	rl.SetTargetFPS(60)
 	rl.InitAudioDevice()
 	rl.SetExitKey(.ESCAPE)
+	click = rl.LoadSound("assets/click.wav")
 }
 
 @(export)
@@ -173,6 +189,10 @@ game_init :: proc() {
 	}
 
 	g.conductor.bpm = 108
+	g.conductor.onQuarter = onQuarter
+	g.conductor.onEighth = onEighth
+	g.conductor.onHalf = onHalf
+	g.conductor.onWhole = onWhole
 
 	commit_hash = GitCommitHash(string(git_file))
 
