@@ -42,6 +42,7 @@ Game_Memory :: struct {
 	run:       bool,
 	entities:  Entity_Map,
 	conductor: ^Conductor,
+	pattern:   Rhythm_Pattern,
 }
 
 g: ^Game_Memory
@@ -105,17 +106,19 @@ draw :: proc() {
 	rl.ClearBackground(rl.BLACK)
 	DrawAnchoredText(.TOP_LEFT, {10, 10}, hash_string, 15, rl.WHITE)
 
-	pos := GetAnchoredPosition(.CENTER, {75, 20}, {0, 0})
-	button_rect := rl.Rectangle{f32(pos.x), f32(pos.y), 75, 20}
-	if rl.GuiButton(button_rect, "Toggle Music") {
-		toggle_music()
-	}
+	// pos := GetAnchoredPosition(.CENTER, {75, 20}, {0, 0})
+	// button_rect := rl.Rectangle{f32(pos.x), f32(pos.y), 75, 20}
+	// if rl.GuiButton(button_rect, "Toggle Music") {
+	// 	toggle_music()
+	// }
+	//
+	//
+	// rl.DrawRectangleRec(eighth_rect, rl.RED)
+	// rl.DrawRectangleRec(quarter_rect, rl.RED)
+	// rl.DrawRectangleRec(half_rect, rl.RED)
+	// rl.DrawRectangleRec(whole_rect, rl.RED)
 
-
-	rl.DrawRectangleRec(eighth_rect, rl.RED)
-	rl.DrawRectangleRec(quarter_rect, rl.RED)
-	rl.DrawRectangleRec(half_rect, rl.RED)
-	rl.DrawRectangleRec(whole_rect, rl.RED)
+	draw_test_bar(g.pattern)
 
 	rl.EndDrawing()
 }
@@ -155,9 +158,11 @@ game_init :: proc() {
 	g = new(Game_Memory)
 
 	g^ = Game_Memory {
-		run            = true,
-		conductor      = new(Conductor),
+		run       = true,
+		conductor = new(Conductor),
 	}
+
+	g.pattern.rhythm = {Rhythm_Unit{count = 4, duration = .QUARTER}}
 
 	g.conductor.bpm = 108
 	g.conductor.onQuarter = onQuarter
