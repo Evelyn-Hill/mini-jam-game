@@ -10,40 +10,33 @@ Anchor :: enum {
 	CENTER,
 }
 
-ScreenSize :: distinct [2]i32
-UIPosition :: distinct [2]i32
-
 DrawAnchoredText :: proc(
 	anchor: Anchor,
-	offset: UIPosition,
+	offset: [2]f32,
 	text: cstring,
-	fontSize: i32,
+	fontSize: f32,
 	color: rl.Color,
 ) {
 	textSize := rl.MeasureTextEx(rl.GetFontDefault(), text, f32(fontSize), 2)
-	textSizeI: UIPosition = {i32(textSize.x), i32(textSize.y)}
 
+    default_font := rl.GetFontDefault()
+
+    position := offset
 	switch anchor {
 	case .TOP_LEFT:
-		rl.DrawText(text, offset.x, offset.y, fontSize, color)
+        // pass, position is the same as offset
 	case .TOP_RIGHT:
-		x_pos := (GetScreenSize().x - textSizeI.x) - offset.x
-		y_pos := offset.y
-		rl.DrawText(text, x_pos, y_pos, fontSize, color)
+		position.x = (get_f32_screen_size().x - textSize.x) - offset.x
 	case .BOTTOM_LEFT:
-		x_pos := offset.x
-		y_pos := (GetScreenSize().y - textSizeI.y) - offset.y
-		rl.DrawText(text, x_pos, y_pos, fontSize, color)
+		position.y = (get_f32_screen_size().y - textSize.y) - offset.y
 	case .BOTTOM_RIGHT:
-		x_pos := (GetScreenSize().x - textSizeI.x) - offset.x
-		y_pos := (GetScreenSize().y - textSizeI.y) - offset.y
-		rl.DrawText(text, x_pos, y_pos, fontSize, color)
+		position.x = (get_f32_screen_size().x - textSize.x) - offset.x
+		position.y = (get_f32_screen_size().y - textSize.y) - offset.y
 	case .CENTER:
-		x_pos := (GetScreenSize().x / 2) - (textSizeI.x / 2) - offset.x
-		y_pos := (GetScreenSize().y / 2) - (textSizeI.y / 2) - offset.y
-		rl.DrawText(text, x_pos, y_pos, fontSize, color)
+		position.x = (get_f32_screen_size().x / 2) - (textSize.x / 2) - offset.x
+		position.y = (get_f32_screen_size().y / 2) - (textSize.y / 2) - offset.y
 	}
-
+    rl.DrawTextEx(default_font, text, offset, fontSize, 0, color)
 }
 
 // Use this to get the position for an object *before* your draw call.
@@ -52,34 +45,46 @@ DrawAnchoredText :: proc(
 // DrawRectangle(pos.x, pos.y, size, size, color)
 GetAnchoredPosition :: proc(
 	anchor: Anchor,
-	itemSize: rl.Vector2,
-	offset: UIPosition,
-) -> UIPosition {
+	itemSize: [2]f32,
+	offset: [2]f32,
+) -> [2]f32 {
 
 	switch anchor {
 	case .TOP_LEFT:
 		return offset
 	case .TOP_RIGHT:
-		return {(GetScreenSize().x - i32(itemSize.x)) - offset.x, offset.y}
+		return {(get_f32_screen_size().x - itemSize.x) - offset.x, offset.y}
 	case .BOTTOM_LEFT:
-		return {offset.x, (GetScreenSize().y - i32(itemSize.y)) - offset.y}
+		return {offset.x, (get_f32_screen_size().y - itemSize.y) - offset.y}
 	case .BOTTOM_RIGHT:
 		return {
-			(GetScreenSize().x - i32(itemSize.x)) - offset.x,
-			(GetScreenSize().y - i32(itemSize.y)) - offset.y,
+			(get_f32_screen_size().x - itemSize.x) - offset.x,
+			(get_f32_screen_size().y - itemSize.y) - offset.y,
 		}
 	case .CENTER:
 		return {
-			(GetScreenSize().x / 2) - i32(itemSize.x / 2) - offset.x,
-			(GetScreenSize().y / 2) - i32(itemSize.y / 2) - offset.y,
+			(get_f32_screen_size().x / 2 - itemSize.x / 2 - offset.x),
+			(get_f32_screen_size().y / 2 - itemSize.y / 2 - offset.y),
 		}
 	}
 
 	return {0, 0}
 }
 
-GetScreenSize :: proc() -> ScreenSize {
-	return {rl.GetScreenWidth(), rl.GetScreenHeight()}
+GetScreenSize :: proc() -> [2]i32 {
+    return {
+        rl.GetScreenWidth(),
+        rl.GetScreenHeight(),
+    }
+}
+
+get_i32_screen_size :: GetScreenSize
+
+get_f32_screen_size :: proc() -> [2]f32 {
+    return {
+        f32(rl.GetScreenWidth()),
+        f32(rl.GetScreenHeight()),
+    }
 }
 
 /* I'll do these if I gotta. -P
