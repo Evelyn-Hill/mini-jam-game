@@ -27,8 +27,7 @@ created.
 
 package game
 
-//import "core:fmt"
-import fmt "core:fmt"
+import "core:fmt"
 import rl "vendor:raylib"
 
 PIXEL_WINDOW_HEIGHT :: 180
