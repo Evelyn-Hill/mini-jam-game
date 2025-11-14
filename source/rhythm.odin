@@ -31,6 +31,11 @@ draw_test_bar :: proc(p: Rhythm_Pattern) {
 	}
 
 	rl.DrawRectangleLinesEx(bar, 2, rl.WHITE)
+
+    time_line_x := bar.x + (p.time * bar.width) / duration
+    time_line_top := [2]f32{ time_line_x, bar.y - 20, }
+    time_line_bot := [2]f32{ time_line_x, bar.y + bar.height + 20 }
+    rl.DrawLineEx(time_line_top, time_line_bot, 3, rl.BLUE)
 }
 
 pattern_duration :: proc(p: Rhythm_Pattern, bpm: f32) -> f32 {

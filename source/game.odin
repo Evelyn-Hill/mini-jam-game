@@ -85,7 +85,7 @@ ui_camera :: proc() -> rl.Camera2D {
 	return {zoom = f32(rl.GetScreenHeight()) / PIXEL_WINDOW_HEIGHT}
 }
 
-update :: proc() {
+update :: proc(dt: f32) {
 	if rl.IsKeyPressed(.ESCAPE) {
 		g.run = false
 	}
@@ -93,7 +93,12 @@ update :: proc() {
 	if playing {
 		rl.UpdateMusicStream(g.conductor.music)
 		SyncBeat(g.conductor)
+		g.pattern.time += dt
+		if g.pattern.time > pattern_duration(g.pattern, g.conductor.bpm) {
+			g.pattern.time -= pattern_duration(g.pattern, g.conductor.bpm)
+		}
 	}
+
 }
 
 draw :: proc() {
@@ -106,13 +111,13 @@ draw :: proc() {
 	rl.ClearBackground(rl.BLACK)
 	DrawAnchoredText(.TOP_LEFT, {10, 10}, hash_string, 15, rl.WHITE)
 
-	// pos := GetAnchoredPosition(.CENTER, {75, 20}, {0, 0})
-	// button_rect := rl.Rectangle{f32(pos.x), f32(pos.y), 75, 20}
-	// if rl.GuiButton(button_rect, "Toggle Music") {
-	// 	toggle_music()
-	// }
-	//
-	//
+	button_pos := GetAnchoredPosition(.CENTER, {75, 20}, {0, 75})
+	button_rect := rl.Rectangle{f32(button_pos.x), f32(button_pos.y), 75, 20}
+	if rl.GuiButton(button_rect, "Toggle Music") {
+		toggle_music()
+	}
+
+
 	// rl.DrawRectangleRec(eighth_rect, rl.RED)
 	// rl.DrawRectangleRec(quarter_rect, rl.RED)
 	// rl.DrawRectangleRec(half_rect, rl.RED)
@@ -130,12 +135,14 @@ toggle_music :: proc() {
 	} else {
 		rl.PlayMusicStream(g.conductor.music)
 		playing = true
+        g.pattern.time = 0
 	}
 }
 
 @(export)
 game_update :: proc() {
-	update()
+	dt := rl.GetFrameTime()
+	update(dt)
 	draw()
 
 	// Everything on tracking allocator is valid until end-of-frame.
@@ -214,12 +221,11 @@ game_hot_reloaded :: proc(mem: rawptr) {
 	g.conductor.music = rl.LoadMusicStream("./assets/save_it_redd.wav")
 
 	g.pattern.rhythm = {
-        Rhythm_Unit{count = 3, duration = .EIGHTH},
-        Rhythm_Unit{count = 3, duration = .EIGHTH},
-        Rhythm_Unit{count = 1, duration = .QUARTER},
-        Rhythm_Unit{count = 1, duration = .EIGHTH},
-        Rhythm_Unit{count = 1, duration = .QUARTER},
-    }
+		Rhythm_Unit{count = 1, duration = .QUARTER},
+		Rhythm_Unit{count = 1, duration = .QUARTER},
+		Rhythm_Unit{count = 1, duration = .QUARTER},
+		Rhythm_Unit{count = 1, duration = .QUARTER},
+	}
 
 }
 
