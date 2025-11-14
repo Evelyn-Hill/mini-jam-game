@@ -13,14 +13,11 @@ Entity :: struct {
 }
 
 Entity_Map :: struct {
-	items:     [MAX_ENTITIES]Entity,
-	free_list: [dynamic]Entity_Handle,
-	count:     uint,
-	top:       uint,
-}
-
-entity_map_destroy :: proc() {
-	delete(g.entities.free_list)
+	items:      [MAX_ENTITIES]Entity,
+	free_list:  [MAX_ENTITIES]Entity_Handle,
+	free_count: uint,
+	count:      uint,
+	top:        uint,
 }
 
 entity_get :: proc(h: Entity_Handle) -> (^Entity, bool) #optional_ok {
@@ -35,8 +32,9 @@ entity_get :: proc(h: Entity_Handle) -> (^Entity, bool) #optional_ok {
 entity_add :: proc(v: Entity) -> Entity_Handle {
 	v := v
 
-	if len(g.entities.free_list) > 0 {
-		h := pop(&g.entities.free_list)
+	if g.entities.free_count > 0 {
+		g.entities.free_count -= 1
+		h := g.entities.free_list[g.entities.free_count]
 		h.gen += 1
 		v.handle = h
 		g.entities.items[h.idx] = v
@@ -61,6 +59,7 @@ entity_remove :: proc(h: Entity_Handle) {
 	}
 	e.handle.gen = 0
 	g.entities.count -= 1
-	append(&g.entities.free_list, h)
+	g.entities.free_list[g.entities.free_count] = h
+	g.entities.free_count += 1
 }
 */
