@@ -40,7 +40,7 @@ emscripten_allocator_proc :: proc(
 	// cannot use maps and simd features.
 
 	aligned_alloc :: proc(
-		size, alignment: i32,
+		size, alignment: int,
 		zero_memory: bool,
 		old_ptr: rawptr = nil,
 	) -> (
@@ -65,7 +65,7 @@ emscripten_allocator_proc :: proc(
 
 		ptr := uintptr(aligned_mem)
 		aligned_ptr := (ptr - 1 + uintptr(a)) & -uintptr(a)
-		diff := i32(aligned_ptr - ptr)
+		diff := int(aligned_ptr - ptr)
 		if (size + diff) > space || allocated_mem == nil {
 			return nil, .Out_Of_Memory
 		}
@@ -84,9 +84,9 @@ emscripten_allocator_proc :: proc(
 
 	aligned_resize :: proc(
 		p: rawptr,
-		old_size: i32,
-		new_size: i32,
-		new_alignment: i32,
+		old_size: int,
+		new_size: int,
+		new_alignment: int,
 	) -> (
 		[]byte,
 		mem.Allocator_Error,
