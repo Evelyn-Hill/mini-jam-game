@@ -1,6 +1,7 @@
 package game
 
 
+// At our previous stack size, this was the max # of entities we could hold at any given moment. -P
 MAX_ENTITIES :: 1386
 
 Entity_Handle :: struct {
@@ -11,7 +12,6 @@ Entity_Handle :: struct {
 Entity :: struct {
 	handle:   Entity_Handle,
 	position: [2]f32,
-	rotation: f32,
 }
 
 Entity_Map :: struct {
