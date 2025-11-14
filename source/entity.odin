@@ -1,5 +1,5 @@
 package game
-
+/*
 MAX_ENTITIES :: 2048
 
 Entity_Handle :: struct {
@@ -63,3 +63,4 @@ entity_remove :: proc(h: Entity_Handle) {
 	g.entities.count -= 1
 	append(&g.entities.free_list, h)
 }
+*/
