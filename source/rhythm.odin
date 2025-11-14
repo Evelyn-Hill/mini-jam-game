@@ -62,7 +62,3 @@ beat_duration :: proc(b: Rhythm_Unit, bpm: f32) -> f32 {
 
 	return quarters * seconds_per_beat(bpm)
 }
-
-seconds_per_beat :: proc(bpm: f32) -> f32 {
-	return 60 / bpm
-}

@@ -87,17 +87,24 @@ SyncBeat :: proc(c: ^Conductor) {
 	}
 }
 
-GetNote :: proc(c: ^Conductor, duration: NoteDurations) -> (count: int, timeSince: f32) {
+get_beat :: proc(c: Conductor, duration: NoteDurations) -> (int, f32) {
+	time_playing := rl.GetMusicTimePlayed(c.music)
+	spb := seconds_per_beat(c.bpm)
+	beat_factor: f32
 	switch duration {
 	case .EIGHTH:
-		return c.eighthNote, c.timeSinceLastEighth
+		beat_factor = 0.5
 	case .QUARTER:
-		return c.quarterNote, c.timeSinceLastQuarter
+		beat_factor = 1
 	case .HALF:
-		return c.halfNote, c.timeSinceLastHalf
+		beat_factor = 2
 	case .WHOLE:
-		return c.wholeNote, c.timeSinceLastWhole
+		beat_factor = 4
 	}
+	num_beats := spb * beat_factor / time_playing
+	return int(math.floor(num_beats)), (num_beats - math.floor(num_beats)) / beat_factor
+}
 
-	return -1, -1
+seconds_per_beat :: proc(bpm: f32) -> f32 {
+	return 60 / bpm
 }
