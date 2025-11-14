@@ -36,7 +36,7 @@ DrawAnchoredText :: proc(
 		position.x = (get_f32_screen_size().x / 2) - (textSize.x / 2) - offset.x
 		position.y = (get_f32_screen_size().y / 2) - (textSize.y / 2) - offset.y
 	}
-    rl.DrawTextEx(default_font, text, offset, fontSize, 0, color)
+    rl.DrawTextEx(default_font, text, offset, fontSize, 2, color)
 }
 
 // Use this to get the position for an object *before* your draw call.
