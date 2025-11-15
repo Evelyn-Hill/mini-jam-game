@@ -32,9 +32,12 @@ import hm "handle_map"
 
 git_file :: #load("../.git/logs/HEAD")
 
-playing: bool = false
-
 click: rl.Sound
+
+Game_State :: enum {
+	Playing,
+	Debug,
+}
 
 Game_Memory :: struct {
 	run:        bool,
@@ -43,6 +46,7 @@ Game_Memory :: struct {
 	bpm:        f32,
 	pattern:    Rhythm_Pattern,
 	good_beats: int,
+	state:      Game_State,
 }
 
 g: ^Game_Memory
@@ -78,19 +82,20 @@ update :: proc(dt: f32) {
 		g.run = false
 	}
 
-	if !playing {
-		return
-	}
+	switch g.state {
+	case .Playing:
+		rl.UpdateMusicStream(g.music)
+		g.pattern.time += dt
+		if g.pattern.time > pattern_duration(g.pattern, g.bpm) {
+			g.pattern.time -= pattern_duration(g.pattern, g.bpm)
+		}
 
-	rl.UpdateMusicStream(g.music)
-	g.pattern.time += dt
-	if g.pattern.time > pattern_duration(g.pattern, g.bpm) {
-		g.pattern.time -= pattern_duration(g.pattern, g.bpm)
-	}
-
-	current_subdivision := pattern_get_current_subdivision(g.pattern, g.bpm)
-	if rl.IsMouseButtonPressed(.LEFT) && on_beat(g.music, current_subdivision, g.bpm) {
-		g.good_beats += 1
+		current_subdivision := pattern_get_current_subdivision(g.pattern, g.bpm)
+		if rl.IsMouseButtonPressed(.LEFT) && on_beat(g.music, current_subdivision, g.bpm) {
+			g.good_beats += 1
+		}
+	case .Debug:
+		// pass
 	}
 }
 
@@ -101,9 +106,9 @@ draw :: proc() {
 	rl.BeginDrawing()
 	DrawRemainingTimeString()
 	rl.ClearBackground(rl.BLACK)
-	DrawAnchoredText(.TOP_LEFT, {10, 10}, hash_string, 15, rl.WHITE)
+	DrawAnchoredText(.TOP_LEFT, {10, 10}, hash_string, 20, rl.WHITE)
 
-	DrawAnchoredText(.TOP_LEFT, {10, 25}, good_beats_str, 20, rl.WHITE)
+	DrawAnchoredText(.TOP_LEFT, {10, 30}, good_beats_str, 20, rl.WHITE)
 
 	button_pos := GetAnchoredPosition(.CENTER, {75, 20}, {0, 75})
 	button_rect := rl.Rectangle{f32(button_pos.x), f32(button_pos.y), 75, 20}
