@@ -112,8 +112,15 @@ draw :: proc() {
 
 	button_pos := GetAnchoredPosition(.CENTER, {75, 20}, {0, 75})
 	button_rect := rl.Rectangle{f32(button_pos.x), f32(button_pos.y), 75, 20}
-	if rl.GuiButton(button_rect, "Toggle Music") {
-		toggle_music()
+	if rl.GuiButton(button_rect, "Toggle Debug") {
+		switch g.state {
+		case .Playing:
+			rl.StopMusicStream(g.music)
+			g.state = .Debug
+		case .Debug:
+			rl.PlayMusicStream(g.music)
+			g.state = .Playing
+		}
 	}
 
 	// rl.DrawRectangleRec(eighth_rect, rl.RED)
@@ -124,17 +131,6 @@ draw :: proc() {
 	pattern_draw_test_bar(g.pattern)
 
 	rl.EndDrawing()
-}
-
-toggle_music :: proc() {
-	if (playing) {
-		rl.StopMusicStream(g.music)
-		playing = false
-	} else {
-		rl.PlayMusicStream(g.music)
-		playing = true
-		g.pattern.time = 0
-	}
 }
 
 @(export)
