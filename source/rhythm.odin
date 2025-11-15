@@ -93,8 +93,20 @@ beat_duration :: proc(b: Rhythm_Beat, bpm: f32) -> f32 {
 	return subdivision_duration(b.subdivision, bpm) * f32(b.count)
 }
 
-subdivision_duration :: proc(b: Rhythm_Subdivision, bpm: f32) -> f32 {
-	return subdivision_quarters(b) * seconds_per_beat(bpm)
+subdivision_duration :: proc(s: Rhythm_Subdivision, bpm: f32) -> f32 {
+	return subdivision_quarters(s) * seconds_per_beat(bpm)
+}
+
+pattern_quarters :: proc(p: Rhythm_Pattern) -> f32 {
+	quarters: f32 = 0
+	for b in p.rhythm {
+		quarters += beat_quarters(b)
+	}
+	return quarters
+}
+
+beat_quarters :: proc(b: Rhythm_Beat) -> f32 {
+	return subdivision_quarters(b.subdivision) * f32(b.count)
 }
 
 subdivision_quarters :: proc(b: Rhythm_Subdivision) -> f32 {
