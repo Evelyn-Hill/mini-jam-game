@@ -101,10 +101,12 @@ update :: proc(dt: f32) {
 			}
 		case Rest_Segment:
 			t.time += dt
-			segment, since_start := level_get_current_segment(g.level, g.bpm)
-			if p_segment, ok := segment.(Rhythm_Pattern); ok {
-				p_segment.time = since_start
-				g.level_segment = p_segment
+			if t.time > segment_duration(t, g.bpm) {
+				segment, since_start := level_get_current_segment(g.level, g.bpm)
+				if p_segment, ok := segment.(Rhythm_Pattern); ok {
+					p_segment.time = since_start
+					g.level_segment = p_segment
+				}
 			}
 		}
 
@@ -248,6 +250,8 @@ game_parent_window_size_changed :: proc(w, h: int) {
 
 level_init :: proc() {
 	g.level = level_create()
+
+	assert(len(g.level.segments) == 0, "level length should be zero!")
 
 	level_append_rest(&g.level, 1)
 
