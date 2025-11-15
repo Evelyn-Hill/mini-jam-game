@@ -27,10 +27,7 @@ created.
 
 package game
 
-import "core:fmt"
 import rl "vendor:raylib"
-
-PIXEL_WINDOW_HEIGHT :: 180
 
 git_file :: #load("../.git/logs/HEAD")
 
@@ -74,40 +71,27 @@ onEighth :: proc() {
 	eighth_rect.x += 5
 }
 
-
-game_camera :: proc() -> rl.Camera2D {
-	w := f32(rl.GetScreenWidth())
-	h := f32(rl.GetScreenHeight())
-
-	return {zoom = h / PIXEL_WINDOW_HEIGHT, target = [2]f32{}, offset = {w / 2, h / 2}}
-}
-
-ui_camera :: proc() -> rl.Camera2D {
-	return {zoom = f32(rl.GetScreenHeight()) / PIXEL_WINDOW_HEIGHT}
-}
-
 update :: proc(dt: f32) {
 	if rl.IsKeyPressed(.ESCAPE) {
 		g.run = false
 	}
 
-	if playing {
-		rl.UpdateMusicStream(g.music)
-		g.pattern.time += dt
-		if g.pattern.time > pattern_duration(g.pattern, g.bpm) {
-			g.pattern.time -= pattern_duration(g.pattern, g.bpm)
-		}
+	if !playing {
+		return
 	}
 
+	rl.UpdateMusicStream(g.music)
+	g.pattern.time += dt
+	if g.pattern.time > pattern_duration(g.pattern, g.bpm) {
+		g.pattern.time -= pattern_duration(g.pattern, g.bpm)
+	}
 }
 
 draw :: proc() {
-	hash_string := fmt.caprint("Built From: ", commit_hash)
-	defer delete(hash_string)
+	hash_string := rl.TextFormat("Built From: %s", commit_hash)
 
-
-	DrawRemainingTimeString()
 	rl.BeginDrawing()
+	DrawRemainingTimeString()
 	rl.ClearBackground(rl.BLACK)
 	DrawAnchoredText(.TOP_LEFT, {10, 10}, hash_string, 15, rl.WHITE)
 
@@ -117,13 +101,12 @@ draw :: proc() {
 		toggle_music()
 	}
 
-
 	// rl.DrawRectangleRec(eighth_rect, rl.RED)
 	// rl.DrawRectangleRec(quarter_rect, rl.RED)
 	// rl.DrawRectangleRec(half_rect, rl.RED)
 	// rl.DrawRectangleRec(whole_rect, rl.RED)
 
-	draw_test_bar(g.pattern)
+	pattern_draw_test_bar(g.pattern)
 
 	rl.EndDrawing()
 }

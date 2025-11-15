@@ -22,8 +22,7 @@ Rhythm_Subdivision :: enum {
 	WHOLE,
 }
 
-
-draw_test_bar :: proc(p: Rhythm_Pattern) {
+pattern_draw_test_bar :: proc(p: Rhythm_Pattern) {
 	screen_width := rl.GetScreenWidth()
 	bar_size := [2]f32{0.8 * f32(screen_width), 50}
 	bar_pos := GetAnchoredPosition(.CENTER, bar_size, {0, 0})
