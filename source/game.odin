@@ -27,8 +27,9 @@ created.
 
 package game
 
-import rl "vendor:raylib"
+import "core:math"
 import hm "handle_map"
+import rl "vendor:raylib"
 
 git_file :: #load("../.git/logs/HEAD")
 
@@ -40,13 +41,14 @@ Game_State :: enum {
 }
 
 Game_Memory :: struct {
-	run:        bool,
-	entities:   Entity_Map,
-	music:      rl.Music,
-	bpm:        f32,
-	pattern:    Rhythm_Pattern,
-	good_beats: int,
-	state:      Game_State,
+	run:           bool,
+	entities:      Entity_Map,
+	music:         rl.Music,
+	bpm:           f32,
+	level:         Level,
+	level_segment: Level_Segment,
+	good_beats:    int,
+	state:         Game_State,
 }
 
 g: ^Game_Memory
@@ -85,17 +87,32 @@ update :: proc(dt: f32) {
 	switch g.state {
 	case .Playing:
 		rl.UpdateMusicStream(g.music)
-		g.pattern.time += dt
-		if g.pattern.time > pattern_duration(g.pattern, g.bpm) {
-			g.pattern.time -= pattern_duration(g.pattern, g.bpm)
-		}
+		g.level.time += dt
+		switch &t in g.level_segment {
+		case Rhythm_Pattern:
+			t.time += dt
+			if t.time > pattern_duration(t, g.bpm) {
+				segment, since_start := level_get_current_segment(g.level, g.bpm)
+				if p_segment, ok := segment.(Rhythm_Pattern); ok {
+					p_segment.time = since_start
+					segment = p_segment
+				}
+				g.level_segment = segment
+			}
 
-		current_subdivision := pattern_get_current_subdivision(g.pattern, g.bpm)
-		if rl.IsMouseButtonPressed(.LEFT) && on_beat(g.music, current_subdivision, g.bpm) {
-			g.good_beats += 1
+			current_subdivision := pattern_get_current_subdivision(t, g.bpm)
+			if rl.IsMouseButtonPressed(.LEFT) && on_beat(g.music, current_subdivision, g.bpm) {
+				g.good_beats += 1
+			}
+		case Rest_Segment:
+			segment, since_start := level_get_current_segment(g.level, g.bpm)
+			if p_segment, ok := segment.(Rhythm_Pattern); ok {
+				p_segment.time = since_start
+				g.level_segment = p_segment
+			}
 		}
 	case .Debug:
-		// pass
+	// pass
 	}
 }
 
@@ -120,16 +137,15 @@ draw :: proc() {
 		case .Debug:
 			rl.PlayMusicStream(g.music)
 			g.state = .Playing
-			g.pattern.time = 0
+			g.level.time = 0
+			segment, _ := level_get_current_segment(g.level, g.bpm)
+			g.level_segment = segment
 		}
 	}
 
-	// rl.DrawRectangleRec(eighth_rect, rl.RED)
-	// rl.DrawRectangleRec(quarter_rect, rl.RED)
-	// rl.DrawRectangleRec(half_rect, rl.RED)
-	// rl.DrawRectangleRec(whole_rect, rl.RED)
-
-	pattern_draw_test_bar(g.pattern)
+	if p_segment, ok := g.level_segment.(Rhythm_Pattern); ok {
+		pattern_draw_test_bar(p_segment)
+	}
 
 	rl.EndDrawing()
 }
@@ -178,6 +194,7 @@ game_should_run :: proc() -> bool {
 
 @(export)
 game_shutdown :: proc() {
+	level_destroy(&g.level)
 	hm.delete(&g.entities)
 	free(g)
 }
@@ -209,14 +226,7 @@ game_hot_reloaded :: proc(mem: rawptr) {
 		state = .Debug,
 	}
 
-	g.pattern.rhythm = {
-		Rhythm_Beat{count = 1, subdivision = .QUARTER},
-		Rhythm_Beat{count = 1, subdivision = .QUARTER},
-		Rhythm_Beat{count = 1, subdivision = .EIGHTH},
-		Rhythm_Beat{count = 1, subdivision = .EIGHTH},
-		Rhythm_Beat{count = 1, subdivision = .QUARTER},
-	}
-
+	level_init()
 }
 
 @(export)
@@ -233,4 +243,41 @@ game_force_restart :: proc() -> bool {
 // `rl.SetWindowSize` call if you don't want a resizable game.
 game_parent_window_size_changed :: proc(w, h: int) {
 	rl.SetWindowSize(i32(w), i32(h))
+}
+
+level_init :: proc() {
+	g.level = level_create()
+	level_append_rest(&g.level, 1)
+
+	four_quarter_notes: Rhythm_Pattern
+	four_quarter_notes.rhythm = {
+		Rhythm_Beat{count = 1, subdivision = .QUARTER},
+		Rhythm_Beat{count = 1, subdivision = .QUARTER},
+		Rhythm_Beat{count = 1, subdivision = .QUARTER},
+		Rhythm_Beat{count = 1, subdivision = .QUARTER},
+	}
+
+	eight_eighth_notes: Rhythm_Pattern
+	eight_eighth_notes.rhythm = {
+		Rhythm_Beat{count = 1, subdivision = .EIGHTH},
+		Rhythm_Beat{count = 1, subdivision = .EIGHTH},
+		Rhythm_Beat{count = 1, subdivision = .EIGHTH},
+		Rhythm_Beat{count = 1, subdivision = .EIGHTH},
+		Rhythm_Beat{count = 1, subdivision = .EIGHTH},
+		Rhythm_Beat{count = 1, subdivision = .EIGHTH},
+		Rhythm_Beat{count = 1, subdivision = .EIGHTH},
+		Rhythm_Beat{count = 1, subdivision = .EIGHTH},
+	}
+
+	song_duration := rl.GetMusicTimeLength(g.music)
+	song_beats := int(math.round(song_duration / seconds_per_beat(g.bpm)))
+	song_measures := (song_beats - 1) / 4
+
+	for i in 0 ..< song_measures {
+		if i % 2 == 0 {
+			level_append_pattern(&g.level, four_quarter_notes)
+		} else {
+			level_append_pattern(&g.level, eight_eighth_notes)
+		}
+	}
 }
