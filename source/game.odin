@@ -27,12 +27,7 @@ created.
 
 package game
 
-//import "core:fmt"
-import fmt "core:fmt"
-import "core:math/linalg"
 import rl "vendor:raylib"
-
-PIXEL_WINDOW_HEIGHT :: 180
 
 git_file :: #load("../.git/logs/HEAD")
 
@@ -41,12 +36,12 @@ playing: bool = false
 click: rl.Sound
 
 Game_Memory :: struct {
-	player_pos:     rl.Vector2,
-	player_texture: rl.Texture,
-	some_number:    int,
-	run:            bool,
-	entities:       Entity_Map,
-	conductor:      ^Conductor,
+	run:        bool,
+	entities:   Entity_Map,
+	music:      rl.Music,
+	bpm:        f32,
+	pattern:    Rhythm_Pattern,
+	good_beats: int,
 }
 
 g: ^Game_Memory
@@ -77,87 +72,69 @@ onEighth :: proc() {
 	eighth_rect.x += 5
 }
 
-
-game_camera :: proc() -> rl.Camera2D {
-	w := f32(rl.GetScreenWidth())
-	h := f32(rl.GetScreenHeight())
-
-	return {zoom = h / PIXEL_WINDOW_HEIGHT, target = g.player_pos, offset = {w / 2, h / 2}}
-}
-
-ui_camera :: proc() -> rl.Camera2D {
-	return {zoom = f32(rl.GetScreenHeight()) / PIXEL_WINDOW_HEIGHT}
-}
-
-update :: proc() {
-	input: rl.Vector2
-
-	if rl.IsKeyDown(.UP) || rl.IsKeyDown(.W) {
-		input.y -= 1
-	}
-	if rl.IsKeyDown(.DOWN) || rl.IsKeyDown(.S) {
-		input.y += 1
-	}
-	if rl.IsKeyDown(.LEFT) || rl.IsKeyDown(.A) {
-		input.x -= 1
-	}
-
-	if rl.IsKeyDown(.RIGHT) || rl.IsKeyDown(.D) {
-		input.x += 1
-	}
-
-	input = linalg.normalize0(input)
-	g.player_pos += input * rl.GetFrameTime() * 100
-	g.some_number += 1
-
+update :: proc(dt: f32) {
 	if rl.IsKeyPressed(.ESCAPE) {
 		g.run = false
 	}
 
-	if playing {
-		rl.UpdateMusicStream(g.conductor.music)
-		SyncBeat(g.conductor)
+	if !playing {
+		return
+	}
+
+	rl.UpdateMusicStream(g.music)
+	g.pattern.time += dt
+	if g.pattern.time > pattern_duration(g.pattern, g.bpm) {
+		g.pattern.time -= pattern_duration(g.pattern, g.bpm)
+	}
+
+	current_subdivision := pattern_get_current_subdivision(g.pattern, g.bpm)
+	if rl.IsMouseButtonPressed(.LEFT) && on_beat(g.music, current_subdivision, g.bpm) {
+		g.good_beats += 1
 	}
 }
 
 draw :: proc() {
-	hash_string := fmt.caprint("Built From: ", commit_hash)
-	defer delete(hash_string)
+	hash_string := rl.TextFormat("Built From: %s", commit_hash)
+	good_beats_str := rl.TextFormat("Good Beats: %d", g.good_beats)
 
-
-	DrawRemainingTimeString()
 	rl.BeginDrawing()
+	DrawRemainingTimeString()
 	rl.ClearBackground(rl.BLACK)
 	DrawAnchoredText(.TOP_LEFT, {10, 10}, hash_string, 15, rl.WHITE)
 
-	pos := GetAnchoredPosition(.CENTER, {75, 20}, {0, 0})
-	button_rect := rl.Rectangle{f32(pos.x), f32(pos.y), 75, 20}
+	DrawAnchoredText(.TOP_LEFT, {10, 25}, good_beats_str, 20, rl.WHITE)
+
+	button_pos := GetAnchoredPosition(.CENTER, {75, 20}, {0, 75})
+	button_rect := rl.Rectangle{f32(button_pos.x), f32(button_pos.y), 75, 20}
 	if rl.GuiButton(button_rect, "Toggle Music") {
 		toggle_music()
 	}
 
+	// rl.DrawRectangleRec(eighth_rect, rl.RED)
+	// rl.DrawRectangleRec(quarter_rect, rl.RED)
+	// rl.DrawRectangleRec(half_rect, rl.RED)
+	// rl.DrawRectangleRec(whole_rect, rl.RED)
 
-	rl.DrawRectangleRec(eighth_rect, rl.RED)
-	rl.DrawRectangleRec(quarter_rect, rl.RED)
-	rl.DrawRectangleRec(half_rect, rl.RED)
-	rl.DrawRectangleRec(whole_rect, rl.RED)
+	pattern_draw_test_bar(g.pattern)
 
 	rl.EndDrawing()
 }
 
 toggle_music :: proc() {
 	if (playing) {
-		rl.StopMusicStream(g.conductor.music)
+		rl.StopMusicStream(g.music)
 		playing = false
 	} else {
-		rl.PlayMusicStream(g.conductor.music)
+		rl.PlayMusicStream(g.music)
 		playing = true
+		g.pattern.time = 0
 	}
 }
 
 @(export)
 game_update :: proc() {
-	update()
+	dt := rl.GetFrameTime()
+	update(dt)
 	draw()
 
 	// Everything on tracking allocator is valid until end-of-frame.
@@ -179,24 +156,8 @@ game_init_window :: proc() {
 game_init :: proc() {
 	g = new(Game_Memory)
 
-	g^ = Game_Memory {
-		run            = true,
-		some_number    = 100,
-		// You can put textures, sounds and music in the `assets` folder. Those
-		// files will be part any release or web build.
-		player_texture = rl.LoadTexture("assets/round_cat.png"),
-		conductor      = new(Conductor),
-	}
-
-	g.conductor.bpm = 108
-	g.conductor.onQuarter = onQuarter
-	g.conductor.onEighth = onEighth
-	g.conductor.onHalf = onHalf
-	g.conductor.onWhole = onWhole
-
 	commit_hash = GitCommitHash(string(git_file))
 
-	g.conductor.music = rl.LoadMusicStream("./assets/save_it_redd.wav")
 	game_hot_reloaded(g)
 }
 
@@ -214,7 +175,6 @@ game_should_run :: proc() -> bool {
 
 @(export)
 game_shutdown :: proc() {
-	free(g.conductor)
 	free(g)
 }
 
@@ -238,8 +198,20 @@ game_memory_size :: proc() -> int {
 game_hot_reloaded :: proc(mem: rawptr) {
 	g = (^Game_Memory)(mem)
 
-	// Here you can also set your own global variables. A good idea is to make
-	// your global variables into pointers that point to something inside `g`.
+	g^ = Game_Memory {
+		run   = true,
+		bpm   = 108,
+		music = rl.LoadMusicStream("./assets/save_it_redd.wav"),
+	}
+
+	g.pattern.rhythm = {
+		Rhythm_Beat{count = 1, subdivision = .QUARTER},
+		Rhythm_Beat{count = 1, subdivision = .QUARTER},
+		Rhythm_Beat{count = 1, subdivision = .EIGHTH},
+		Rhythm_Beat{count = 1, subdivision = .EIGHTH},
+		Rhythm_Beat{count = 1, subdivision = .QUARTER},
+	}
+
 }
 
 @(export)
