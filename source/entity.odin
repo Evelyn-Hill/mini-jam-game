@@ -1,8 +1,6 @@
 package game
 
-
-// At our previous stack size, this was the max # of entities we could hold at any given moment. -P
-MAX_ENTITIES :: 1386
+MAX_ENTITIES :: 1024
 
 Entity_Handle :: struct {
 	idx: uint,

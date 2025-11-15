@@ -39,10 +39,11 @@ playing: bool = false
 click: rl.Sound
 
 Game_Memory :: struct {
-	run:       bool,
-	entities:  Entity_Map,
-	conductor: ^Conductor,
-	pattern:   Rhythm_Pattern,
+	run:      bool,
+	entities: Entity_Map,
+	music:    rl.Music,
+	bpm:      f32,
+	pattern:  Rhythm_Pattern,
 }
 
 g: ^Game_Memory
@@ -91,11 +92,10 @@ update :: proc(dt: f32) {
 	}
 
 	if playing {
-		rl.UpdateMusicStream(g.conductor.music)
-		SyncBeat(g.conductor)
+		rl.UpdateMusicStream(g.music)
 		g.pattern.time += dt
-		if g.pattern.time > pattern_duration(g.pattern, g.conductor.bpm) {
-			g.pattern.time -= pattern_duration(g.pattern, g.conductor.bpm)
+		if g.pattern.time > pattern_duration(g.pattern, g.bpm) {
+			g.pattern.time -= pattern_duration(g.pattern, g.bpm)
 		}
 	}
 
@@ -130,12 +130,12 @@ draw :: proc() {
 
 toggle_music :: proc() {
 	if (playing) {
-		rl.StopMusicStream(g.conductor.music)
+		rl.StopMusicStream(g.music)
 		playing = false
 	} else {
-		rl.PlayMusicStream(g.conductor.music)
+		rl.PlayMusicStream(g.music)
 		playing = true
-        g.pattern.time = 0
+		g.pattern.time = 0
 	}
 }
 
@@ -183,7 +183,6 @@ game_should_run :: proc() -> bool {
 
 @(export)
 game_shutdown :: proc() {
-	free(g.conductor)
 	free(g)
 }
 
@@ -208,23 +207,16 @@ game_hot_reloaded :: proc(mem: rawptr) {
 	g = (^Game_Memory)(mem)
 
 	g^ = Game_Memory {
-		run       = true,
-		conductor = new(Conductor),
+		run   = true,
+		bpm   = 108,
+		music = rl.LoadMusicStream("./assets/save_it_redd.wav"),
 	}
 
-	g.conductor.bpm = 108
-	g.conductor.onQuarter = onQuarter
-	g.conductor.onEighth = onEighth
-	g.conductor.onHalf = onHalf
-	g.conductor.onWhole = onWhole
-
-	g.conductor.music = rl.LoadMusicStream("./assets/save_it_redd.wav")
-
 	g.pattern.rhythm = {
-		Rhythm_Unit{count = 1, duration = .QUARTER},
-		Rhythm_Unit{count = 1, duration = .QUARTER},
-		Rhythm_Unit{count = 1, duration = .QUARTER},
-		Rhythm_Unit{count = 1, duration = .QUARTER},
+		Rhythm_Beat{count = 1, subdivision = .QUARTER},
+		Rhythm_Beat{count = 1, subdivision = .QUARTER},
+		Rhythm_Beat{count = 1, subdivision = .QUARTER},
+		Rhythm_Beat{count = 1, subdivision = .QUARTER},
 	}
 
 }

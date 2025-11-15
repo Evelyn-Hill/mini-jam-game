@@ -1,18 +1,27 @@
 package game
 
+import "core:math"
 import rl "vendor:raylib"
 
 BEAT_BUFFER :: 0.125
 
-Rhythm_Unit :: struct {
+Rhythm_Beat :: struct {
 	count:    int,
-	duration: NoteDurations,
+	subdivision: Rhythm_Subdivision,
 }
 
 Rhythm_Pattern :: struct {
-	rhythm: []Rhythm_Unit,
+	rhythm: []Rhythm_Beat,
 	time:   f32,
 }
+
+Rhythm_Subdivision :: enum {
+	EIGHTH,
+	QUARTER,
+	HALF,
+	WHOLE,
+}
+
 
 draw_test_bar :: proc(p: Rhythm_Pattern) {
 	screen_width := rl.GetScreenWidth()
@@ -20,14 +29,14 @@ draw_test_bar :: proc(p: Rhythm_Pattern) {
 	bar_pos := GetAnchoredPosition(.CENTER, bar_size, {0, 0})
 	bar := rl.Rectangle{bar_pos.x, bar_pos.y, bar_size.x, bar_size.y}
 
-	duration := pattern_duration(p, g.conductor.bpm)
+	duration := pattern_duration(p, g.bpm)
 	time: f32
 	for beat in p.rhythm {
 		start_offset := time * bar.width / duration
 		width := BEAT_BUFFER * bar.width / duration
 		box := rl.Rectangle{bar.x + start_offset, bar.y, width, bar.height}
 		rl.DrawRectanglePro(box, {}, 0, rl.RED)
-		time += beat_duration(beat, g.conductor.bpm)
+		time += beat_duration(beat, g.bpm)
 	}
 
 	rl.DrawRectangleLinesEx(bar, 2, rl.WHITE)
@@ -38,6 +47,24 @@ draw_test_bar :: proc(p: Rhythm_Pattern) {
     rl.DrawLineEx(time_line_top, time_line_bot, 3, rl.BLUE)
 }
 
+get_beat :: proc(music: rl.Music, duration: Rhythm_Subdivision, bpm: f32) -> (int, f32) {
+	time_playing := rl.GetMusicTimePlayed(music)
+	spb := seconds_per_beat(bpm)
+	beat_factor: f32
+	switch duration {
+	case .EIGHTH:
+		beat_factor = 0.5
+	case .QUARTER:
+		beat_factor = 1
+	case .HALF:
+		beat_factor = 2
+	case .WHOLE:
+		beat_factor = 4
+	}
+	num_beats := spb * beat_factor / time_playing
+	return int(math.floor(num_beats)), (num_beats - math.floor(num_beats)) / beat_factor
+}
+
 pattern_duration :: proc(p: Rhythm_Pattern, bpm: f32) -> f32 {
 	sum: f32 = 0
 	for beat in p.rhythm {
@@ -46,19 +73,28 @@ pattern_duration :: proc(p: Rhythm_Pattern, bpm: f32) -> f32 {
 	return sum
 }
 
-beat_duration :: proc(b: Rhythm_Unit, bpm: f32) -> f32 {
-	count := f32(b.count)
-	quarters: f32
-	switch b.duration {
-	case .WHOLE:
-		quarters = count * 4
-	case .HALF:
-		quarters = count * 2
-	case .QUARTER:
-		quarters = count
-	case .EIGHTH:
-		quarters = count / 2.0
-	}
+beat_duration :: proc(b: Rhythm_Beat, bpm: f32) -> f32 {
+	return subdivision_duration(b.subdivision, bpm) * f32(b.count)
+}
 
-	return quarters * seconds_per_beat(bpm)
+subdivision_duration :: proc(b: Rhythm_Subdivision, bpm: f32) -> f32 {
+	return subdivision_quarters(b) * seconds_per_beat(bpm)
+}
+
+subdivision_quarters :: proc(b: Rhythm_Subdivision) -> f32 {
+	switch b {
+	case .WHOLE:
+		return 4
+	case .HALF:
+		return 2
+	case .QUARTER:
+		return 1
+	case .EIGHTH:
+		return 0.5
+	}
+	panic("")
+}
+
+seconds_per_beat :: proc(bpm: f32) -> f32 {
+	return 60 / bpm
 }
