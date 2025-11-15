@@ -1,6 +1,5 @@
 package game
 
-import "core:log"
 import "core:math"
 import rl "vendor:raylib"
 
@@ -52,33 +51,32 @@ pattern_draw_test_bar :: proc(p: Rhythm_Pattern) {
 	rl.DrawLineEx(time_line_top, time_line_bot, 3, rl.BLUE)
 }
 
-pattern_get_current_subdivision :: proc(p: Rhythm_Pattern, bpm: f32) -> Rhythm_Subdivision {
+pattern_get_current_beat :: proc(p: Rhythm_Pattern, bpm: f32) -> Rhythm_Beat {
 	beat_time: f32 = 0
 	for beat, i in p.rhythm {
 		if beat_time > p.time && i >= 1 {
-			return p.rhythm[i - 1].subdivision
+			return p.rhythm[i - 1]
 		}
 		beat_time += beat_duration(beat, bpm)
 	}
-	return p.rhythm[len(p.rhythm) - 1].subdivision
+	return p.rhythm[len(p.rhythm) - 1]
 }
 
-on_beat :: proc(m: rl.Music, subdivision: Rhythm_Subdivision, bpm: f32) -> bool {
-	_, since_beat := get_beat(m, subdivision, bpm)
-	until_beat := subdivision_duration(subdivision, bpm) - since_beat
-	log.debugf("%3f since last beat, %3f until next beat (threshold: %3f)", since_beat, until_beat, BEAT_BUFFER / 2)
+on_beat :: proc(m: rl.Music, beat: Rhythm_Beat, bpm: f32) -> bool {
+	_, since_beat := get_beat(m, beat, bpm)
+	until_beat := beat_duration(beat, bpm) - since_beat
 	assert(since_beat >= 0 && until_beat >= 0)
 	return since_beat < BEAT_BUFFER / 2 || until_beat < BEAT_BUFFER / 2
 }
 
-get_beat :: proc(music: rl.Music, subdivision: Rhythm_Subdivision, bpm: f32) -> (int, f32) {
+get_beat :: proc(music: rl.Music, beat: Rhythm_Beat, bpm: f32) -> (int, f32) {
 	time_playing := rl.GetMusicTimePlayed(music)
 	spb := seconds_per_beat(bpm)
-	beat_factor := subdivision_quarters(subdivision)
+	beat_factor := beat_quarters(beat)
 	num_beats := time_playing / (spb * beat_factor)
 	whole_beats := math.floor(num_beats)
 	frac_beats := num_beats - whole_beats
-	return int(whole_beats), frac_beats * subdivision_duration(subdivision, bpm)
+	return int(whole_beats), frac_beats * beat_duration(beat, bpm)
 }
 
 pattern_duration :: proc(p: Rhythm_Pattern, bpm: f32) -> f32 {

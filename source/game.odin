@@ -111,15 +111,7 @@ update :: proc(dt: f32) {
 		}
 
         if rl.IsMouseButtonPressed(.LEFT) {
-            current_subdivision: Rhythm_Subdivision
-            switch segment in g.level_segment {
-            case Rhythm_Pattern:
-                current_subdivision = pattern_get_current_subdivision(segment, g.bpm)
-            case Rest_Segment:
-                panic("unimplemented")
-            }
-
-            g.last_accuracy = on_beat_accuracy(current_subdivision)
+            g.last_accuracy = on_beat_accuracy()
         }
 	case .Debug:
 	// pass
