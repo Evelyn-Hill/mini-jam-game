@@ -1,6 +1,7 @@
 package game
 
 import "core:math"
+import rl "vendor:raylib"
 
 Level :: struct {
 	segments: [dynamic]Level_Segment,
@@ -14,6 +15,7 @@ Level_Segment :: union #no_nil {
 
 Rest_Segment :: struct {
 	beats: int,
+	time:  f32,
 }
 
 level_get_current_segment :: proc(l: Level, tempo: f32) -> (Level_Segment, f32) {
@@ -40,7 +42,7 @@ level_append_pattern :: proc(l: ^Level, pattern: Rhythm_Pattern) {
 }
 
 level_append_rest :: proc(l: ^Level, beats: int) {
-	append(&l.segments, Rest_Segment{beats})
+	append(&l.segments, Rest_Segment{beats = beats})
 }
 
 segment_duration :: proc(segment: Level_Segment, tempo: f32) -> f32 {
@@ -68,4 +70,31 @@ level_destroy :: proc(l: ^Level) {
 	if len(l.segments) > 0 {
 		delete(l.segments)
 	}
+}
+
+segment_draw_test_bar :: proc(segment: Level_Segment) {
+	switch s in segment {
+	case Rhythm_Pattern:
+		pattern_draw_test_bar(s)
+	case Rest_Segment:
+		rest_draw_test_bar(s)
+	}
+}
+
+rest_draw_test_bar :: proc(s: Rest_Segment) {
+	screen_width := rl.GetScreenWidth()
+	bar_size := [2]f32{0.8 * f32(screen_width), 50}
+	bar_pos := GetAnchoredPosition(.CENTER, bar_size, {0, 0})
+	bar := rl.Rectangle{bar_pos.x, bar_pos.y, bar_size.x, bar_size.y}
+
+	duration := segment_duration(s, g.bpm)
+
+	DrawAnchoredText(.CENTER, {0, 0}, "WAIT!!!", 20, rl.RED)
+
+	rl.DrawRectangleLinesEx(bar, 2, rl.WHITE)
+
+	time_line_x := bar.x + (s.time * bar.width) / duration
+	time_line_top := [2]f32{time_line_x, bar.y - 20}
+	time_line_bot := [2]f32{time_line_x, bar.y + bar.height + 20}
+	rl.DrawLineEx(time_line_top, time_line_bot, 3, rl.BLUE)
 }

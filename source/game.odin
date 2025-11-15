@@ -99,16 +99,19 @@ update :: proc(dt: f32) {
 				}
 				g.level_segment = segment
 			}
-
-			current_subdivision := pattern_get_current_subdivision(t, g.bpm)
-			if rl.IsMouseButtonPressed(.LEFT) && on_beat(g.music, current_subdivision, g.bpm) {
-				g.good_beats += 1
-			}
 		case Rest_Segment:
+			t.time += dt
 			segment, since_start := level_get_current_segment(g.level, g.bpm)
 			if p_segment, ok := segment.(Rhythm_Pattern); ok {
 				p_segment.time = since_start
 				g.level_segment = p_segment
+			}
+		}
+
+		if pattern, ok := g.level_segment.(Rhythm_Pattern); ok {
+			current_subdivision := pattern_get_current_subdivision(pattern, g.bpm)
+			if rl.IsMouseButtonPressed(.LEFT) && on_beat(g.music, current_subdivision, g.bpm) {
+				g.good_beats += 1
 			}
 		}
 	case .Debug:
@@ -143,9 +146,7 @@ draw :: proc() {
 		}
 	}
 
-	if p_segment, ok := g.level_segment.(Rhythm_Pattern); ok {
-		pattern_draw_test_bar(p_segment)
-	}
+	segment_draw_test_bar(g.level_segment)
 
 	rl.EndDrawing()
 }
@@ -247,6 +248,7 @@ game_parent_window_size_changed :: proc(w, h: int) {
 
 level_init :: proc() {
 	g.level = level_create()
+
 	level_append_rest(&g.level, 1)
 
 	four_quarter_notes: Rhythm_Pattern
@@ -257,18 +259,6 @@ level_init :: proc() {
 		Rhythm_Beat{count = 1, subdivision = .QUARTER},
 	}
 
-	eight_eighth_notes: Rhythm_Pattern
-	eight_eighth_notes.rhythm = {
-		Rhythm_Beat{count = 1, subdivision = .EIGHTH},
-		Rhythm_Beat{count = 1, subdivision = .EIGHTH},
-		Rhythm_Beat{count = 1, subdivision = .EIGHTH},
-		Rhythm_Beat{count = 1, subdivision = .EIGHTH},
-		Rhythm_Beat{count = 1, subdivision = .EIGHTH},
-		Rhythm_Beat{count = 1, subdivision = .EIGHTH},
-		Rhythm_Beat{count = 1, subdivision = .EIGHTH},
-		Rhythm_Beat{count = 1, subdivision = .EIGHTH},
-	}
-
 	song_duration := rl.GetMusicTimeLength(g.music)
 	song_beats := int(math.round(song_duration / seconds_per_beat(g.bpm)))
 	song_measures := (song_beats - 1) / 4
@@ -277,7 +267,7 @@ level_init :: proc() {
 		if i % 2 == 0 {
 			level_append_pattern(&g.level, four_quarter_notes)
 		} else {
-			level_append_pattern(&g.level, eight_eighth_notes)
+			level_append_rest(&g.level, 4)
 		}
 	}
 }
