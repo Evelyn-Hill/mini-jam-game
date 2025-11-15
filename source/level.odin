@@ -1,5 +1,7 @@
 package game
 
+import "core:reflect"
+import "core:log"
 import "core:math"
 import rl "vendor:raylib"
 
@@ -20,12 +22,16 @@ Rest_Segment :: struct {
 
 level_get_current_segment :: proc(l: Level, tempo: f32) -> (Level_Segment, f32) {
 	time: f32 = 0
-	for segment in l.segments {
-		duration := segment_duration(segment, tempo)
-		if time >= l.time {
+	for _, index in l.segments {
+		if time > l.time {
+			segment := l.segments[index - 1]
+			duration := segment_duration(segment, tempo)
 			since_started := duration - (time - l.time)
+			log.debugf("current segment at index %d: %v", index, reflect.union_variant_typeid(segment))
 			return segment, since_started
 		}
+		segment := l.segments[index]
+		duration := segment_duration(segment, tempo)
 		time += duration
 	}
 	// at this point time is equal to the duration of the entire level
