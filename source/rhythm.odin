@@ -3,7 +3,7 @@ package game
 import "core:math"
 import rl "vendor:raylib"
 
-BEAT_BUFFER :: 0.125
+BEAT_BUFFER :: 0.0825
 
 Rhythm_Beat :: struct {
 	count:    int,
@@ -32,8 +32,13 @@ draw_test_bar :: proc(p: Rhythm_Pattern) {
 	duration := pattern_duration(p, g.bpm)
 	time: f32
 	for beat in p.rhythm {
-		start_offset := time * bar.width / duration
 		width := BEAT_BUFFER * bar.width / duration
+		start_offset := (time * bar.width / duration)
+		if start_offset == 0 {
+			width /= 2
+		} else {
+			start_offset -= width / 2
+		}
 		box := rl.Rectangle{bar.x + start_offset, bar.y, width, bar.height}
 		rl.DrawRectanglePro(box, {}, 0, rl.RED)
 		time += beat_duration(beat, g.bpm)
