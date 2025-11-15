@@ -47,8 +47,8 @@ Game_Memory :: struct {
 	bpm:           f32,
 	level:         Level,
 	level_segment: Level_Segment,
-	good_beats:    int,
 	state:         Game_State,
+    last_accuracy: Accuracy,
 }
 
 g: ^Game_Memory
@@ -110,12 +110,17 @@ update :: proc(dt: f32) {
 			}
 		}
 
-		if pattern, ok := g.level_segment.(Rhythm_Pattern); ok {
-			current_subdivision := pattern_get_current_subdivision(pattern, g.bpm)
-			if rl.IsMouseButtonPressed(.LEFT) && on_beat(g.music, current_subdivision, g.bpm) {
-				g.good_beats += 1
-			}
-		}
+        if rl.IsMouseButtonPressed(.LEFT) {
+            current_subdivision: Rhythm_Subdivision
+            switch segment in g.level_segment {
+            case Rhythm_Pattern:
+                current_subdivision = pattern_get_current_subdivision(segment, g.bpm)
+            case Rest_Segment:
+                panic("unimplemented")
+            }
+
+            g.last_accuracy = on_beat_accuracy(current_subdivision)
+        }
 	case .Debug:
 	// pass
 	}
@@ -123,14 +128,16 @@ update :: proc(dt: f32) {
 
 draw :: proc() {
 	hash_string := rl.TextFormat("Built From: %s", commit_hash)
-	good_beats_str := rl.TextFormat("Good Beats: %d", g.good_beats)
 
 	rl.BeginDrawing()
 	DrawRemainingTimeString()
 	rl.ClearBackground(rl.BLACK)
 	DrawAnchoredText(.TOP_LEFT, {10, 10}, hash_string, 20, rl.WHITE)
 
-	DrawAnchoredText(.TOP_LEFT, {10, 30}, good_beats_str, 20, rl.WHITE)
+    if g.last_accuracy != .None {
+        last_acc_str := rl.TextFormat("Last Accuracy: %v", g.last_accuracy)
+        DrawAnchoredText(.TOP_LEFT, {10, 30}, last_acc_str, 20, rl.WHITE)
+    }
 
 	button_pos := GetAnchoredPosition(.CENTER, {75, 20}, {0, 75})
 	button_rect := rl.Rectangle{f32(button_pos.x), f32(button_pos.y), 75, 20}
