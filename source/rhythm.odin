@@ -66,7 +66,12 @@ pattern_get_current_subdivision :: proc(p: Rhythm_Pattern, bpm: f32) -> Rhythm_S
 on_beat :: proc(m: rl.Music, subdivision: Rhythm_Subdivision, bpm: f32) -> bool {
 	_, since_beat := get_beat(m, subdivision, bpm)
 	until_beat := subdivision_duration(subdivision, bpm) - since_beat
-	log.debugf("%3f since last beat, %3f until next beat (threshold: %3f)", since_beat, until_beat, BEAT_BUFFER / 2)
+	log.debugf(
+		"%3f since last beat, %3f until next beat (threshold: %3f)",
+		since_beat,
+		until_beat,
+		BEAT_BUFFER / 2,
+	)
 	assert(since_beat >= 0 && until_beat >= 0)
 	return since_beat < BEAT_BUFFER / 2 || until_beat < BEAT_BUFFER / 2
 }
@@ -120,6 +125,7 @@ subdivision_quarters :: proc(b: Rhythm_Subdivision) -> f32 {
 	case .EIGHTH:
 		return 0.5
 	}
+
 	panic("")
 }
 

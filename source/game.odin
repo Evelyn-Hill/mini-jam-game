@@ -49,40 +49,35 @@ Game_Memory :: struct {
 	level_segment: Level_Segment,
 	good_beats:    int,
 	state:         Game_State,
+	path:          [PATH_LEN][2]f32,
+	my_entity:     Entity_Handle,
 }
 
 g: ^Game_Memory
 
 commit_hash: string
 
-
-quarter_rect := rl.Rectangle{10, 20, 20, 20}
-half_rect := rl.Rectangle{10, 50, 20, 20}
-whole_rect := rl.Rectangle{10, 80, 20, 20}
-eighth_rect := rl.Rectangle{10, 110, 20, 20}
+conveyor_img: rl.Texture2D
 
 
 onQuarter :: proc() {
-	quarter_rect.x += 5
 }
 
 onHalf :: proc() {
-	half_rect.x += 5
 
 }
 
 onWhole :: proc() {
-	whole_rect.x += 5
 }
 
 onEighth :: proc() {
-	eighth_rect.x += 5
 }
 
 update :: proc(dt: f32) {
 	if rl.IsKeyPressed(.ESCAPE) {
 		g.run = false
 	}
+
 
 	switch g.state {
 	case .Playing:
@@ -146,7 +141,15 @@ draw :: proc() {
 		}
 	}
 
+	rl.DrawTexture(conveyor_img, 0, 0, rl.WHITE)
+
+	for point in g.path {
+		rl.DrawCircle(i32(point.x), i32(point.y), 5.0, rl.GREEN)
+	}
 	segment_draw_test_bar(g.level_segment)
+
+	e := entity_get(g.my_entity)
+	rl.DrawRectangleRec(rl.Rectangle{e.position.x - 10, e.position.y - 10, 20, 20}, rl.RED)
 
 	rl.EndDrawing()
 }
@@ -170,6 +173,7 @@ game_init_window :: proc() {
 	rl.InitAudioDevice()
 	rl.SetExitKey(.ESCAPE)
 	click = rl.LoadSound("assets/click.wav")
+	conveyor_img = rl.LoadTexture("assets/conveyorbelt.png")
 }
 
 @(export)
@@ -227,6 +231,15 @@ game_hot_reloaded :: proc(mem: rawptr) {
 		state = .Debug,
 	}
 
+	path_init()
+
+	g.my_entity = entity_create_anim(
+		g.path[0],
+		seconds_per_beat(g.bpm),
+		seconds_per_beat(g.bpm) * 4,
+		false,
+	)
+
 	level_init()
 }
 
@@ -270,4 +283,17 @@ level_init :: proc() {
 			level_append_rest(&g.level, 4)
 		}
 	}
+}
+
+
+// This is ugly ignore it.
+path_init :: proc() {
+	g.path[0] = {-50, 350}
+	g.path[1] = {200, 350}
+	g.path[2] = {900, 350}
+	g.path[3] = {1500, 350}
+	g.path[4] = {-50, 600}
+	g.path[5] = {700, 600}
+	g.path[6] = {1150, 710}
+
 }
