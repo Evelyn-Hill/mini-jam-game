@@ -50,28 +50,20 @@ g: ^Game_Memory
 
 commit_hash: string
 
-
-quarter_rect := rl.Rectangle{10, 20, 20, 20}
-half_rect := rl.Rectangle{10, 50, 20, 20}
-whole_rect := rl.Rectangle{10, 80, 20, 20}
-eighth_rect := rl.Rectangle{10, 110, 20, 20}
-
-
+elapsed: f32
+r := rl.Rectangle{20, 20, 25, 25}
+b := Bezier{{50, 50}, {150, 50}, {100, 100}}
 onQuarter :: proc() {
-	quarter_rect.x += 5
 }
 
 onHalf :: proc() {
-	half_rect.x += 5
 
 }
 
 onWhole :: proc() {
-	whole_rect.x += 5
 }
 
 onEighth :: proc() {
-	eighth_rect.x += 5
 }
 
 
@@ -99,6 +91,13 @@ update :: proc(dt: f32) {
 		}
 	}
 
+
+	b = Bezier{{50, 50}, {150, 50}, {100, 100}}
+	bpos := bezier_lerp(b, 1.0, &elapsed)
+	//fmt.println(bpos)
+	r.x = bpos.x
+	r.y = bpos.y
+
 }
 
 draw :: proc() {
@@ -117,13 +116,10 @@ draw :: proc() {
 		toggle_music()
 	}
 
+	rl.DrawRectangleRec(r, rl.WHITE)
+	rl.DrawSplineSegmentBezierQuadratic(b.point_a, b.control, b.point_b, 2, rl.RED)
 
-	// rl.DrawRectangleRec(eighth_rect, rl.RED)
-	// rl.DrawRectangleRec(quarter_rect, rl.RED)
-	// rl.DrawRectangleRec(half_rect, rl.RED)
-	// rl.DrawRectangleRec(whole_rect, rl.RED)
-
-	draw_test_bar(g.pattern)
+	//draw_test_bar(g.pattern)
 
 	rl.EndDrawing()
 }
