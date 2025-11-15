@@ -120,6 +120,7 @@ draw :: proc() {
 		case .Debug:
 			rl.PlayMusicStream(g.music)
 			g.state = .Playing
+			g.pattern.time = 0
 		}
 	}
 
@@ -205,6 +206,7 @@ game_hot_reloaded :: proc(mem: rawptr) {
 		run   = true,
 		bpm   = 108,
 		music = rl.LoadMusicStream("./assets/save_it_redd.wav"),
+		state = .Debug,
 	}
 
 	g.pattern.rhythm = {
