@@ -1,12 +1,13 @@
 package game
 
+import "core:log"
 import "core:math"
 import rl "vendor:raylib"
 
-BEAT_BUFFER :: 0.0825
+BEAT_BUFFER: f32 : 0.125
 
 Rhythm_Beat :: struct {
-	count:    int,
+	count:       int,
 	subdivision: Rhythm_Subdivision,
 }
 
@@ -45,28 +46,39 @@ pattern_draw_test_bar :: proc(p: Rhythm_Pattern) {
 
 	rl.DrawRectangleLinesEx(bar, 2, rl.WHITE)
 
-    time_line_x := bar.x + (p.time * bar.width) / duration
-    time_line_top := [2]f32{ time_line_x, bar.y - 20, }
-    time_line_bot := [2]f32{ time_line_x, bar.y + bar.height + 20 }
-    rl.DrawLineEx(time_line_top, time_line_bot, 3, rl.BLUE)
+	time_line_x := bar.x + (p.time * bar.width) / duration
+	time_line_top := [2]f32{time_line_x, bar.y - 20}
+	time_line_bot := [2]f32{time_line_x, bar.y + bar.height + 20}
+	rl.DrawLineEx(time_line_top, time_line_bot, 3, rl.BLUE)
 }
 
-get_beat :: proc(music: rl.Music, duration: Rhythm_Subdivision, bpm: f32) -> (int, f32) {
+pattern_get_current_subdivision :: proc(p: Rhythm_Pattern, bpm: f32) -> Rhythm_Subdivision {
+	beat_time: f32 = 0
+	for beat, i in p.rhythm {
+		if beat_time > p.time && i >= 1 {
+			return p.rhythm[i - 1].subdivision
+		}
+		beat_time += beat_duration(beat, bpm)
+	}
+	return p.rhythm[len(p.rhythm) - 1].subdivision
+}
+
+on_beat :: proc(m: rl.Music, subdivision: Rhythm_Subdivision, bpm: f32) -> bool {
+	_, since_beat := get_beat(m, subdivision, bpm)
+	until_beat := subdivision_duration(subdivision, bpm) - since_beat
+	log.debugf("%3f since last beat, %3f until next beat (threshold: %3f)", since_beat, until_beat, BEAT_BUFFER / 2)
+	assert(since_beat >= 0 && until_beat >= 0)
+	return since_beat < BEAT_BUFFER / 2 || until_beat < BEAT_BUFFER / 2
+}
+
+get_beat :: proc(music: rl.Music, subdivision: Rhythm_Subdivision, bpm: f32) -> (int, f32) {
 	time_playing := rl.GetMusicTimePlayed(music)
 	spb := seconds_per_beat(bpm)
-	beat_factor: f32
-	switch duration {
-	case .EIGHTH:
-		beat_factor = 0.5
-	case .QUARTER:
-		beat_factor = 1
-	case .HALF:
-		beat_factor = 2
-	case .WHOLE:
-		beat_factor = 4
-	}
-	num_beats := spb * beat_factor / time_playing
-	return int(math.floor(num_beats)), (num_beats - math.floor(num_beats)) / beat_factor
+	beat_factor := subdivision_quarters(subdivision)
+	num_beats := time_playing / (spb * beat_factor)
+	whole_beats := math.floor(num_beats)
+	frac_beats := num_beats - whole_beats
+	return int(whole_beats), frac_beats * subdivision_duration(subdivision, bpm)
 }
 
 pattern_duration :: proc(p: Rhythm_Pattern, bpm: f32) -> f32 {

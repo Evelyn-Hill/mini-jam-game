@@ -36,11 +36,12 @@ playing: bool = false
 click: rl.Sound
 
 Game_Memory :: struct {
-	run:      bool,
-	entities: Entity_Map,
-	music:    rl.Music,
-	bpm:      f32,
-	pattern:  Rhythm_Pattern,
+	run:        bool,
+	entities:   Entity_Map,
+	music:      rl.Music,
+	bpm:        f32,
+	pattern:    Rhythm_Pattern,
+	good_beats: int,
 }
 
 g: ^Game_Memory
@@ -85,15 +86,23 @@ update :: proc(dt: f32) {
 	if g.pattern.time > pattern_duration(g.pattern, g.bpm) {
 		g.pattern.time -= pattern_duration(g.pattern, g.bpm)
 	}
+
+	current_subdivision := pattern_get_current_subdivision(g.pattern, g.bpm)
+	if rl.IsMouseButtonPressed(.LEFT) && on_beat(g.music, current_subdivision, g.bpm) {
+		g.good_beats += 1
+	}
 }
 
 draw :: proc() {
 	hash_string := rl.TextFormat("Built From: %s", commit_hash)
+	good_beats_str := rl.TextFormat("Good Beats: %d", g.good_beats)
 
 	rl.BeginDrawing()
 	DrawRemainingTimeString()
 	rl.ClearBackground(rl.BLACK)
 	DrawAnchoredText(.TOP_LEFT, {10, 10}, hash_string, 15, rl.WHITE)
+
+	DrawAnchoredText(.TOP_LEFT, {10, 25}, good_beats_str, 20, rl.WHITE)
 
 	button_pos := GetAnchoredPosition(.CENTER, {75, 20}, {0, 75})
 	button_rect := rl.Rectangle{f32(button_pos.x), f32(button_pos.y), 75, 20}
@@ -198,7 +207,8 @@ game_hot_reloaded :: proc(mem: rawptr) {
 	g.pattern.rhythm = {
 		Rhythm_Beat{count = 1, subdivision = .QUARTER},
 		Rhythm_Beat{count = 1, subdivision = .QUARTER},
-		Rhythm_Beat{count = 1, subdivision = .QUARTER},
+		Rhythm_Beat{count = 1, subdivision = .EIGHTH},
+		Rhythm_Beat{count = 1, subdivision = .EIGHTH},
 		Rhythm_Beat{count = 1, subdivision = .QUARTER},
 	}
 
