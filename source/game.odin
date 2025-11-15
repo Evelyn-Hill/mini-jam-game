@@ -28,6 +28,7 @@ created.
 package game
 
 import rl "vendor:raylib"
+import hm "handle_map"
 
 git_file :: #load("../.git/logs/HEAD")
 
@@ -175,6 +176,7 @@ game_should_run :: proc() -> bool {
 
 @(export)
 game_shutdown :: proc() {
+	hm.delete(&g.entities)
 	free(g)
 }
 
